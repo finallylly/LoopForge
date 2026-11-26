@@ -121,9 +121,9 @@ Access to the Docker socket is equivalent to root on the host. Two safeguards fo
 
 ### Privileged Docker sandboxes
 
-Sandbox editors can request privileged mode for an individual Docker profile under **Advanced settings**. The executing worker or Runner rejects that request unless its own process environment sets `AGENTFLOW_ALLOW_PRIVILEGED_SANDBOX=true`. For Compose, set the variable in `.env` and recreate the platform container. For a native worker or a connected Runner, set it in the foreground command environment or service configuration and restart the process.
+Sandbox editors can request privileged mode for an individual Docker profile under **Advanced settings**. In **Settings → Execution machines**, administrators can change **Allow privileged Docker sandboxes** for platform Workers and cloud pool machines. Owners can change it for their own connected Runner. The setting defaults to off. The saved choice applies to subsequent starts immediately, including after an upgrade from a deployment that used a startup variable.
 
-Enable this setting only on Docker hosts where the operator trusts every user who can run work there. Privileged containers can access host devices and may gain control of the Docker host. Connected machines need Runner `0.12.5` or later. Automatic LOOP sandbox selection considers ordinary sandboxes, and a privileged profile can be selected explicitly. A non-root execution service continues to map default-root images to its UID and GID to keep workspace files accessible.
+Enable this setting on machines whose users are trusted to run privileged workloads. Privileged containers can access host devices and may gain control of the Docker host. Privileged sandboxes on connected machines require Runner `0.13.2` or later. Automatic LOOP sandbox selection considers ordinary sandboxes, and a privileged profile can be selected explicitly. A non-root execution service continues to map default-root images to its UID and GID to keep workspace files accessible.
 
 ### Docker sandbox resource limits
 
@@ -371,6 +371,8 @@ In personal settings, choose the network environment belonging to the API key; t
 Other dedicated/self-hosted configurations are described in the [official CodeBuddy identity documentation](https://www.codebuddy.ai/docs/cli/iam). Configure the model catalog with `AGENTFLOW_ASSISTANT_MODEL` and `AGENTFLOW_ASSISTANT_MODELS`; ordinary roles can select a model independently.
 
 ## Isolated container acceptance
+
+Asset evolution adds optional manual DDL and a separately applied product-template update. Follow the [asset evolution rollout instructions](api/evolution.md#l3-与部署): upgrade all execution instances and Runners together, start with project-private assets and repository-free document workflows, and keep L3 disabled initially. `AGENTFLOW_EVOLUTION_AUTO_ENABLED` defaults to false; a stored L3 policy does not override this deployment switch.
 
 Run `python3 scripts/test-install.py -v` for installer regression tests covering sudo selection, direct Docker access, unattended permission failures, repeated installation, image mode and access URLs. With a locally built platform image, `LOOPFORGE_INSTALL_TEST_IMAGE=your-image bash scripts/test-install-live.sh` verifies real root and UID 65534 installations, non-loopback HTTP access, first-account creation and repeated installation in isolated Compose projects on random ports. This live test requires a Linux root test runner to drop privileges; it removes its own containers and volumes afterwards. To also exercise real sudo inside a disposable UID 1000 installer container, build `scripts/testdata/install-sudo.Dockerfile` with `--build-arg LOOPFORGE_TEST_BASE=your-image`, then pass that test image as `LOOPFORGE_INSTALL_SUDO_TEST_IMAGE`. The production installer itself does not require root.
 

@@ -84,7 +84,6 @@ import { effortOptions } from "./effort.js";
 import QuickAccessWizard from "./QuickAccessWizard";
 import HarnessSelect from "./HarnessSelect";
 import SandboxPicker from "./SandboxPicker";
-import ProjectCredentialPicker from "./ProjectCredentialPicker";
 import ExecutionMachinePicker from "./ExecutionMachinePicker";
 import { shouldRevealTitle, titleRevealTiming } from "./title-reveal.js";
 import {
@@ -310,7 +309,8 @@ function LiveMessage({ live, generation, finished = false, local = false, readOn
 function readIssueMention() {
   const params = new URLSearchParams(location.search);
   const issueId = params.get("mentionIssue") || "";
-  return issueId ? { issueId, projectId: params.get("projectId") || "" } : null;
+  const intent = params.get("mentionIntent") || "";
+  return issueId ? { issueId, projectId: params.get("projectId") || "", ...(intent ? { intent } : {}) } : null;
 }
 
 function RenameSessionDialog({ session, rename, onClose }) {
@@ -713,10 +713,11 @@ export default function App() {
       if (event.data?.type !== "agentflow-chat-mention-issue") return;
       const issueId = String(event.data.issueId || "");
       const projectId = String(event.data.projectId || "");
+      const intent = String(event.data.intent || "");
       if (!issueId || !projectId) return;
       chat.startProjectDraft(projectId);
       setIssueDraft({ issueId, projectId });
-      setIssueMention({ issueId, projectId });
+      setIssueMention({ issueId, projectId, ...(intent ? { intent } : {}) });
     };
     window.addEventListener("message", listener);
     return () => window.removeEventListener("message", listener);
@@ -744,16 +745,20 @@ export default function App() {
           projectId: issue.projectId,
         };
         const value = insertMention("", { start: 0, end: 0 }, ref);
-        setText(value.text);
+        const initialText = issueMention.intent === "clarify"
+          ? `${value.text}帮我澄清这个需求`
+          : value.text;
+        const initialCaret = initialText.length;
+        setText(initialText);
         setReferences([ref]);
         setMention(null);
         const editor = input.current;
         requestAnimationFrame(() => {
           // Preserve the user’s focus if they interacted during the handoff.
-          if (draftReady.current !== draftKey || !editor?.isConnected || editor.value !== value.text) return;
+          if (draftReady.current !== draftKey || !editor?.isConnected || editor.value !== initialText) return;
           if (document.activeElement !== focusBeforeHandoff) return;
           editor.focus();
-          editor.setSelectionRange(value.caret, value.caret);
+          editor.setSelectionRange(initialCaret, initialCaret);
         });
       })
       .catch((e) => current && chat.setError(e.message))
@@ -762,6 +767,7 @@ export default function App() {
         setIssueMention(null);
         const url = new URL(location.href);
         url.searchParams.delete("mentionIssue");
+        url.searchParams.delete("mentionIntent");
         history.replaceState({}, "", url);
       });
     return () => {
@@ -1457,7 +1463,6 @@ export default function App() {
                 </div>
               ) : null}
               {showEnvironmentPicker ? <SandboxPicker chat={chat} onCreate={() => navigate("sandboxes", { action: "create", projectId: chat.projectId })} /> : null}
-              <ProjectCredentialPicker chat={chat} />
               <Participants session={chat.session} users={chat.users} />
             </>
           ) : null}
@@ -2021,7 +2026,6 @@ export default function App() {
                   </div>
                   {showEnvironmentPicker && chat.projectId ? <ChevronRightSmall /> : null}
                   {showEnvironmentPicker ? <SandboxPicker chat={chat} onCreate={() => navigate("sandboxes", { action: "create", projectId: chat.projectId })} /> : null}
-                  <ProjectCredentialPicker chat={chat} />
                 </div>
                 ) : null}
                 <QueuedMessages
