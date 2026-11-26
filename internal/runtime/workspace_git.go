@@ -64,7 +64,7 @@ func WithSandboxGit(ctx context.Context, sandbox Sandbox, credentials RunCredent
 				remote := gitwork.WorkspaceRemote(ctx, git.Args)
 				if host, ok := gitwork.HTTPSRemoteHost(remote); ok && credentials.GitHTTPCredentials[host].Token != "" {
 					scoped := RunCredentials{GitHTTPCredentials: map[string]domain.GitHTTPExecutionCredential{host: credentials.GitHTTPCredentials[host]}}
-					gitEnv, stop, err := RunGitEnvironment(ctx, execution, workspace, scoped)
+					gitEnv, stop, err := RunGitEnvironment(ctx, execution, workspace, scoped, "")
 					if err != nil {
 						return "", err
 					}

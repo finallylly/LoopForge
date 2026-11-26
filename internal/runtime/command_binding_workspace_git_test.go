@@ -258,7 +258,7 @@ func TestBindGitWorkspaceResetsCLIConfig(t *testing.T) {
 	}
 	sb := &dockerSandbox{workspace: workspace}
 	env := map[string]string{SessionGatewayEnv: "http://relay.invalid/mcp"}
-	if err := bindWorkspaceGitEnvironment(t.Context(), sb, workspace, env, RunCredentials{GitHTTPHosts: map[string]string{"github.com": "github"}}); err != nil {
+	if err := bindWorkspaceGitEnvironment(t.Context(), sb, workspace, env, RunCredentials{GitHTTPHosts: map[string]string{"github.com": "github"}}, ""); err != nil {
 		t.Fatal(err)
 	}
 	stale := filepath.Join(workspace, ".agentflow", "runtime", "gh-config", "hosts.yml")
@@ -266,7 +266,7 @@ func TestBindGitWorkspaceResetsCLIConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	env = map[string]string{SessionGatewayEnv: "http://relay.invalid/mcp"}
-	if err := bindWorkspaceGitEnvironment(t.Context(), sb, workspace, env, RunCredentials{GitHTTPHosts: map[string]string{"github.com": "github"}}); err != nil {
+	if err := bindWorkspaceGitEnvironment(t.Context(), sb, workspace, env, RunCredentials{GitHTTPHosts: map[string]string{"github.com": "github"}}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
